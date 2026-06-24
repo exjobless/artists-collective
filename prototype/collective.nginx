@@ -1,0 +1,11 @@
+# The Artists' Collective — hackathon site (user-node) on Julius.
+# Tailnet-only internal view. The PUBLIC site is served from Cloudflare Pages
+# (generic *.pages.dev), so the origin only needs this private check endpoint.
+server {
+    listen 100.126.215.54:8088;
+    server_name _;
+    root /srv/collective/site;
+    index index.html;
+    location / { try_files $uri $uri/ =404; }
+    location /img/ { expires 7d; access_log off; }
+}

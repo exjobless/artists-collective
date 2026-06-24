@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Artists' Collective — gallery prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#ffffff; --paper-2:#ece6d9; --surface:#ffffff;
+    --ink:#1d1b16; --ink-soft:#615c51; --line:#e4ded2;
+    --accent:#8a3b2e; --ok:#2f6b4d; --shadow:0 22px 60px rgba(40,32,20,.14);
+    --radius:4px; --maxw:1240px;
+  }
+  [data-theme="dark"]{
+    --paper:#141310; --paper-2:#221f17; --surface:#1c1a14;
+    --ink:#f0ebdd; --ink-soft:#a59d8b; --line:#322e22;
+    --accent:#d98c5f; --ok:#74c79a; --shadow:0 22px 60px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;overflow-x:clip}
+  body{background:var(--paper);color:var(--ink);font-family:'Hanken Grotesk',system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;transition:background .35s,color .35s;overflow-x:clip}
+  .serif{font-family:'Cormorant Garamond',Georgia,serif}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  img{max-width:100%;display:block}
+
+  /* NAV */
+  header.nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-inner{max-width:var(--maxw);margin:0 auto;padding:0 30px;height:68px;display:flex;align-items:center;gap:30px}
+  .brand{font-family:'Cormorant Garamond',serif;font-weight:600;letter-spacing:.08em;font-size:21px;cursor:pointer;white-space:nowrap}
+  .brand .dot{color:var(--accent)}
+  .nav-links{display:flex;gap:24px;margin-left:8px}
+  .nav-links button{font-size:14px;color:var(--ink-soft);padding:6px 0;border-bottom:2px solid transparent;transition:.2s}
+  .nav-links button:hover{color:var(--ink)}
+  .nav-links button.active{color:var(--ink);border-bottom-color:var(--accent)}
+  .nav-links button.locked{display:none}
+  .nav-demo{font-size:14px;color:var(--accent);font-weight:600;padding:6px 0;align-self:center;white-space:nowrap;transition:.2s}
+  .nav-demo:hover{opacity:.7}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  @media(max-width:640px){
+    /* two-row nav: brand on top, menu on its own full-width row below */
+    .nav-inner{flex-wrap:wrap;height:auto;padding:8px 14px;gap:6px;row-gap:4px}
+    .brand{order:1;font-size:18px}
+    .nav-right{order:2;margin-left:auto}
+    .nav-links{order:3;flex-basis:100%;width:100%;margin-left:0;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch;gap:22px;padding-bottom:2px}
+    .nav-links::-webkit-scrollbar{display:none}
+    .nav-links button{white-space:nowrap;flex:0 0 auto}
+    #signinBtn{display:none}              /* redundant with the "For Artists" tab on mobile */
+    .nav-right .wallet-pill{display:none} /* keep row 1 clean */
+  }
+  .btn{font-size:13.5px;font-weight:600;padding:10px 20px;border-radius:var(--radius);transition:.18s;white-space:nowrap}
+  .btn-ink{background:var(--ink);color:var(--paper)}
+  .btn-ink:hover{background:var(--accent);color:#fff}
+  .btn-ghost{border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .theme-tog{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;font-size:16px;transition:.18s}
+  .theme-tog:hover{border-color:var(--ink)}
+  .wallet-pill{display:none;align-items:center;gap:8px;font-size:12.5px;background:var(--paper-2);border:1px solid var(--line);padding:7px 13px;border-radius:100px;color:var(--ink-soft)}
+  .wallet-pill .addr{font-family:ui-monospace,monospace;color:var(--ink)}
+  .wallet-pill b{color:var(--accent)}
+
+  .view{display:none;max-width:var(--maxw);margin:0 auto;padding:0 30px}
+  .view.active{display:block;animation:fade .45s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .back{font-size:13px;color:var(--ink-soft);margin:28px 0 0;display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+  .back:hover{color:var(--accent)}
+
+  /* HOME */
+  .home-hero{padding:92px 0 70px;text-align:center;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
+  .home-hero h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(44px,7vw,88px);line-height:1.02;letter-spacing:-.01em}
+  .home-hero h1 em{font-style:italic;color:var(--accent)}
+  .home-hero p{margin:24px auto 0;max-width:52ch;color:var(--ink-soft);font-size:17px}
+  .cta-row{display:flex;gap:14px;justify-content:center;margin-top:36px;flex-wrap:wrap}
+  .btn-lg{padding:14px 28px;font-size:15px}
+  .featured{padding:64px 0 20px}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:26px}
+  .sec-head h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:32px}
+  .sec-head button{font-size:13.5px;color:var(--accent);font-weight:600}
+  .feat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:26px}
+  @media(max-width:820px){.feat-row{grid-template-columns:repeat(2,1fr)}}
+  .bands{display:grid;grid-template-columns:1fr 1fr;gap:26px;padding:60px 0 30px}
+  @media(max-width:760px){.bands{grid-template-columns:1fr}}
+  .band{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);padding:40px}
+  .band h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:27px;margin-bottom:10px}
+  .band p{color:var(--ink-soft);font-size:14.5px;max-width:40ch}
+  .band .btn{margin-top:22px;display:inline-block}
+  .fee-strip{display:flex;gap:48px;justify-content:center;flex-wrap:wrap;padding:54px 0 90px;border-top:1px solid var(--line);margin-top:40px;text-align:center}
+  .stat .n{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:600}
+  .stat .n.acc{color:var(--accent)}
+  .stat .l{font-size:12px;color:var(--ink-soft);letter-spacing:.05em;text-transform:uppercase;margin-top:4px}
+
+  /* GALLERY */
+  .ghead{padding:56px 0 6px}
+  .ghead h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:46px}
+  .ghead p{color:var(--ink-soft);margin-top:8px;max-width:54ch}
+  .toolbar{display:flex;align-items:center;gap:14px;padding:28px 0;flex-wrap:wrap;position:sticky;top:68px;background:var(--paper);z-index:10}
+  .filters{display:flex;gap:8px;flex-wrap:wrap}
+  .filters button{font-size:13px;padding:8px 16px;border:1px solid var(--line);border-radius:100px;color:var(--ink-soft);transition:.18s}
+  .filters button:hover{border-color:var(--ink)}
+  .filters button.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .count{margin-left:auto;font-size:13px;color:var(--ink-soft)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:40px 28px;padding-bottom:90px}
+  @media(max-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:460px){.grid{grid-template-columns:1fr}}
+  .card{display:flex;flex-direction:column;cursor:pointer;animation:fade .5s ease both}
+  .frame{position:relative;aspect-ratio:4/5;background:var(--paper-2);overflow:hidden;border:1px solid var(--line);display:grid;place-items:center;padding:4%;box-shadow:inset 0 0 60px rgba(60,45,25,.06)}
+  .frame img{width:100%;height:100%;object-fit:cover;box-shadow:0 7px 26px rgba(0,0,0,.22);transition:transform .55s ease}
+  .card:hover .frame img{transform:scale(1.04)}
+  .card:hover .meta .t{color:var(--accent)}
+  .meta{padding:14px 2px 0}
+  .meta .t{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;line-height:1.15;transition:.18s}
+  .meta .a{font-size:13px;color:var(--ink-soft);margin-top:3px}
+  .meta .row{display:flex;justify-content:space-between;align-items:baseline;margin-top:9px}
+  .meta .size{font-size:12px;color:var(--ink-soft)}
+  .meta .price{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:18px}
+
+  /* PRODUCT PAGE */
+  .product{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;padding:14px 0 70px;align-items:start}
+  @media(max-width:880px){.product{grid-template-columns:1fr;gap:34px}}
+  .p-stage{position:sticky;top:92px}
+  .p-main{aspect-ratio:1/1;background:var(--paper-2);border:1px solid var(--line);display:grid;place-items:center;padding:9%;box-shadow:inset 0 0 80px rgba(60,45,25,.07)}
+  .p-main img{max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+  .p-main img.detail{width:100%;height:100%;object-fit:cover;box-shadow:none}
+  .p-thumbs{display:flex;gap:12px;margin-top:14px}
+  .p-thumbs button{width:74px;height:74px;border:1px solid var(--line);background:var(--paper-2);padding:6px;display:grid;place-items:center;transition:.18s;overflow:hidden}
+  .p-thumbs button.sel{border-color:var(--accent)}
+  .p-thumbs img{max-width:100%;max-height:100%;object-fit:cover}
+  .p-info h1{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:42px;line-height:1.05}
+  .p-artist{margin-top:10px;font-size:15px;color:var(--ink-soft)}
+  .p-artist a{color:var(--accent);font-weight:600;cursor:pointer}
+  .p-price{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:30px;margin:22px 0}
+  .p-specs{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0;margin:6px 0 22px;font-size:14px}
+  .p-specs div{display:flex;justify-content:space-between;padding:5px 0}
+  .p-specs .k{color:var(--ink-soft)}
+  .p-desc{color:var(--ink-soft);font-size:15px;line-height:1.7;margin-bottom:24px}
+  .p-buy{width:100%;justify-content:center;display:flex;padding:15px}
+  .p-trust{font-size:12.5px;color:var(--ink-soft);text-align:center;margin-top:12px;display:flex;gap:7px;justify-content:center;align-items:center}
+  .more{padding:18px 0 80px;border-top:1px solid var(--line)}
+  .more h2{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:28px;margin:30px 0 22px}
+  .more-row{display:grid;grid-template-columns:repeat(4,1fr);gap:26px}
+  @media(max-width:720px){.more-row{grid-template-columns:repeat(2,1fr)}}
+
+  /* STUDIO (artist page) */
+  .studio-head{display:grid;grid-template-columns:auto 1fr;gap:30px;align-items:center;padding:30px 0 40px;border-bottom:1px solid var(--line)}
+  @media(max-width:620px){.studio-head{grid-template-columns:1fr;text-align:center;justify-items:center}}
+  .avatar{width:108px;height:108px;border-radius:50%;background:var(--paper-2);border:1px solid var(--line);display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-size:40px;color:var(--accent)}
+  .studio-head h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:46px;line-height:1}
+  .studio-head .loc{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-top:8px}
+  .studio-head .bio{margin-top:14px;color:var(--ink-soft);max-width:60ch;font-size:15px}
+  .studio-head .chip{display:inline-block;margin-top:14px;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--paper));padding:5px 12px;border-radius:100px}
+
+  /* FOR ARTISTS */
+  .split{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;padding:64px 0 96px;align-items:start}
+  @media(max-width:820px){.split{grid-template-columns:1fr;gap:40px}}
+  .lede h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(36px,4.5vw,52px);line-height:1.05}
+  .lede h1 em{font-style:italic;color:var(--accent)}
+  .lede>p{margin-top:18px;color:var(--ink-soft);max-width:46ch;font-size:15.5px}
+  .points{margin-top:30px;display:flex;flex-direction:column;gap:18px}
+  .point{display:flex;gap:14px;font-size:15px}
+  .point .ic{flex:none;width:30px;height:30px;border:1px solid var(--accent);color:var(--accent);border-radius:50%;display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-size:16px}
+  .point b{font-weight:600}.point span{color:var(--ink-soft)}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:34px;box-shadow:var(--shadow)}
+  .panel h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:25px;margin-bottom:4px}
+  .panel .sub{font-size:13px;color:var(--ink-soft);margin-bottom:20px}
+  label{display:block;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);margin:18px 0 6px}
+  input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);font-family:inherit;font-size:14.5px;background:var(--paper);color:var(--ink);transition:.18s}
+  input:focus{outline:none;border-color:var(--accent)}
+  .panel .full{width:100%;margin-top:26px;padding:14px;justify-content:center;display:flex}
+  .success{text-align:center;padding:6px 0}
+  .seal{width:56px;height:56px;margin:0 auto 16px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:27px}
+  .kv{text-align:left;background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-top:18px;font-size:13px}
+  .kv div{display:flex;justify-content:space-between;gap:14px;padding:5px 0}
+  .kv .k{color:var(--ink-soft)}
+  .kv .v{font-family:ui-monospace,monospace;text-align:right;word-break:break-all}
+  .kv .v.acc{color:var(--accent);font-weight:600}
+  .onchain-note{font-size:12.5px;color:var(--ink-soft);margin-top:15px;display:flex;align-items:center;gap:8px;justify-content:center}
+  .pulse{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 50%,transparent)}70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
+
+  /* LEDGER */
+  .lhead{padding:56px 0 8px}
+  .lhead h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:44px}
+  .lhead p{color:var(--ink-soft);margin-top:10px;max-width:62ch}
+  .lhead .for-artists{font-size:12px;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;margin-bottom:14px}
+  .ledger{padding:24px 0 90px}
+  .lrow{display:grid;grid-template-columns:140px 1fr 230px;gap:20px;align-items:center;padding:17px 4px;border-bottom:1px solid var(--line);font-size:14px;animation:fade .4s ease both}
+  @media(max-width:760px){.lrow{grid-template-columns:1fr;gap:6px}}
+  .tag{font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:4px 11px;border-radius:100px;width:fit-content;font-weight:600}
+  .tag.sale{background:color-mix(in srgb,var(--accent) 16%,var(--paper));color:var(--accent)}
+  .tag.join{background:color-mix(in srgb,var(--ok) 18%,var(--paper));color:var(--ok)}
+  .lrow .detail b{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px}
+  .lrow .hash{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--ink-soft);text-align:right}
+  @media(max-width:760px){.lrow .hash{text-align:left}}
+  .lrow .hash .nodes{display:block;color:var(--ok);margin-top:2px}
+
+  /* MODAL */
+  .overlay{position:fixed;inset:0;background:rgba(20,16,10,.5);backdrop-filter:blur(4px);display:none;place-items:center;z-index:100;padding:20px}
+  .overlay.show{display:grid;animation:fade .25s ease}
+  .modal{background:var(--surface);border-radius:7px;max-width:420px;width:100%;overflow:hidden;box-shadow:var(--shadow)}
+  .modal-art{height:230px;position:relative;background:var(--paper-2);display:grid;place-items:center;padding:22px}
+  .modal-art img{max-height:100%;max-width:100%;object-fit:contain;box-shadow:0 8px 26px rgba(0,0,0,.25)}
+  .modal-body{padding:26px;position:relative}
+  .x{position:absolute;top:14px;right:16px;background:rgba(0,0,0,.45);color:#fff;width:30px;height:30px;border-radius:50%;font-size:18px;z-index:2}
+  .modal-body h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:25px}
+  .modal-body h3 em{font-style:italic}
+  .modal-body .who{color:var(--ink-soft);font-size:13.5px;margin-top:2px;margin-bottom:20px}
+  .pay-line{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;padding:7px 0}
+  .pay-line .amt{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:22px}
+  .securenote{font-size:12px;color:var(--ink-soft);text-align:center;margin-top:14px;display:flex;gap:6px;justify-content:center;align-items:center}
+  .processing{text-align:center;padding:38px 10px}
+  .spinner{width:36px;height:36px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;margin:0 auto;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* DASHBOARD */
+  .dash-head{padding:50px 0 6px}
+  .dash-head h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:44px}
+  .dash-sub{color:var(--ink-soft);margin-top:8px;max-width:60ch}
+  .dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding:26px 0}
+  @media(max-width:820px){.dash-grid{grid-template-columns:repeat(2,1fr)}}
+  .statcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+  .statcard .l{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+  .statcard .v{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;margin-top:6px}
+  .statcard .v.acc{color:var(--accent)}
+  .dash-cols{display:grid;grid-template-columns:1.25fr 1fr;gap:26px;padding:8px 0 80px}
+  @media(max-width:880px){.dash-cols{grid-template-columns:1fr}}
+  .dpanel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin-bottom:22px}
+  .dpanel h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:24px;margin-bottom:4px}
+  .dpanel .hint{font-size:13px;color:var(--ink-soft);margin-bottom:18px}
+  .proposal{border:1px solid var(--line);border-radius:var(--radius);padding:18px;background:var(--paper)}
+  .proposal .ttl{font-weight:600;font-size:15px}
+  .proposal .body{font-size:14px;color:var(--ink-soft);margin:8px 0 4px}
+  .votebar{height:8px;background:var(--paper-2);border-radius:100px;overflow:hidden;display:flex;margin:14px 0 8px}
+  .votebar .y{background:var(--ok)}.votebar .n{background:var(--accent)}
+  .votenum{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft)}
+  .voterow{display:flex;gap:10px;margin-top:14px}
+  .voterow button{flex:1;padding:11px;border-radius:var(--radius);font-weight:600;border:1px solid var(--line);font-size:13.5px}
+  .voterow .yes{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .voterow .no{background:none;color:var(--ink)}
+  .voterow .no:hover{border-color:var(--ink)}
+  .voted{font-size:13px;color:var(--ok);margin-top:14px;text-align:center;font-weight:600}
+  .treas{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--accent);margin-bottom:10px}
+  .alloc .arow{margin-top:8px}
+  .alloc .row{display:flex;justify-content:space-between;font-size:13.5px}
+  .alloc .bar{height:6px;background:var(--paper-2);border-radius:100px;margin-top:4px;overflow:hidden}
+  .alloc .bar i{display:block;height:100%;background:var(--accent);border-radius:100px}
+  .srow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+  .srow .rcpt{font-family:ui-monospace,monospace;font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .srow .vbadge{flex:none;font-size:11px;color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--paper));padding:4px 10px;border-radius:100px;font-weight:600}
+  footer{border-top:1px solid var(--line);padding:32px 30px;text-align:center;font-size:12px;color:var(--ink-soft)}
+  .proto-badge{position:fixed;left:14px;bottom:14px;z-index:40;background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.04em;padding:7px 12px;border-radius:100px;opacity:.82}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand" data-view="home">The Artists' Collective<span class="dot">.</span></div>
+    <nav class="nav-links">
+      <button data-view="home" class="active">Home</button>
+      <button data-view="gallery">Gallery</button>
+      <button data-view="directory">Artists</button>
+      <button data-view="artists">For Artists</button>
+      <button data-view="dashboard" id="navDash" class="locked">Studio Dashboard</button>
+      <button data-view="ledger" id="navLedger" class="locked">On-chain Ledger</button>
+      <a href="demo.html" class="nav-demo">▶ Demo</a>
+    </nav>
+    <div class="nav-right">
+      <button class="theme-tog" id="themeTog" title="Day / night">☾</button>
+      <div class="wallet-pill" id="walletPill"><span>⬡ <b>artist</b></span><span class="addr" id="walletAddr">usn1q…</span></div>
+      <button class="btn btn-ghost" data-view="artists" id="signinBtn">Open artist account</button>
+    </div>
+  </div>
+</header>
+
+<!-- HOME -->
+<section class="view active" id="view-home">
+  <div class="home-hero">
+    <div class="eyebrow">A gallery on Usernode</div>
+    <h1 class="serif">The gallery the<br>artists <em>own</em>.</h1>
+    <p>Original work, bought in plain money — no crypto, no wallet to learn. The ownership and the fees live on-chain, set by the artists, not by a middleman taking half.</p>
+    <div class="cta-row">
+      <button class="btn btn-ink btn-lg" data-view="gallery">Browse the gallery →</button>
+      <button class="btn btn-ghost btn-lg" data-view="artists">Open an artist account</button>
+    </div>
+  </div>
+  <div class="featured">
+    <div class="sec-head"><h2 class="serif">Newly listed</h2><button data-view="gallery">View the full gallery →</button></div>
+    <div class="feat-row" id="featRow"></div>
+  </div>
+  <div class="bands">
+    <div class="band">
+      <h3 class="serif">For collectors</h3>
+      <p>Browse and buy original work the way you always have — by card, in dollars. You never touch a blockchain. But every sale is recorded on a public ledger, so the provenance of your piece is permanent and verifiable.</p>
+      <button class="btn btn-ghost" data-view="gallery">Browse the gallery</button>
+    </div>
+    <div class="band">
+      <h3 class="serif">For artists</h3>
+      <p>Open an account and you don't just list work — you own a piece of the gallery. A free founding stake, a fee you and the other artists set together, and an on-chain identity from the moment you join.</p>
+      <button class="btn btn-ghost" data-view="artists">Become an artist</button>
+    </div>
+  </div>
+  <div class="fee-strip">
+    <div class="stat"><div class="n">40–50%</div><div class="l">Big platforms take</div></div>
+    <div class="stat"><div class="n acc">20%</div><div class="l">Here — set by artists</div></div>
+    <div class="stat"><div class="n">100%</div><div class="l">Of sales on a public ledger</div></div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section class="view" id="view-gallery">
+  <div class="ghead"><h1 class="serif">The gallery</h1><p>Original work from artists who own this space. Filter by the kind of work you're looking for, then click a piece to see it up close.</p></div>
+  <div class="toolbar">
+    <div class="filters" id="filters">
+      <button class="active" data-f="all">All work</button>
+      <button data-f="Abstract">Abstract</button>
+      <button data-f="Monochrome">Monochrome</button>
+      <button data-f="Landscape">Landscape</button>
+      <button data-f="Minimal">Minimal</button>
+      <button data-f="Sculpture">Sculpture</button>
+    </div>
+    <div class="count" id="count"></div>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<!-- PRODUCT (dynamic) -->
+<section class="view" id="view-product"></section>
+
+<!-- STUDIO / artist page (dynamic) -->
+<section class="view" id="view-studio"></section>
+
+<!-- ARTISTS DIRECTORY -->
+<style>
+#view-directory .dirhead{margin:0 0 24px}
+#view-directory .dirhead h1{font-size:38px;margin:0 0 6px}
+#view-directory .dirhead p{color:var(--ink);opacity:.6;margin:0;max-width:60ch}
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.acard{display:flex;gap:14px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;background:var(--surface);transition:border-color .15s, transform .15s}
+.acard:hover{border-color:var(--accent);transform:translateY(-2px)}
+.aav{width:60px;height:60px;border-radius:50%;overflow:hidden;flex:0 0 auto;background:var(--line);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink)}
+.aav img{width:100%;height:100%;object-fit:cover}
+.acard .an{font-weight:600;color:var(--ink)}
+.acard .amember{color:var(--ok);font-size:12px;font-weight:500;margin-left:6px}
+.acard .al{color:var(--ink);opacity:.55;font-size:13px}
+.acard .aw{color:var(--accent);font-size:12.5px;margin-top:2px}
+</style>
+<section class="view" id="view-directory"></section>
+
+<!-- FOR ARTISTS -->
+<section class="view" id="view-artists">
+  <div class="split">
+    <div class="lede">
+      <h1 class="serif">Open an account,<br><em>own a piece</em> of the gallery.</h1>
+      <p>You don't buy in. When you join, the network gives you a stake — for free. Ownership comes from taking part. No keys or wallets to learn: you sign up, and you're in.</p>
+      <div class="points">
+        <div class="point"><div class="ic">1</div><div><b>An on-chain identity, instantly.</b> <span>A ledger address is created for you the moment you sign up — recorded on Usernode and validated by the nodes.</span></div></div>
+        <div class="point"><div class="ic">2</div><div><b>A free founding stake.</b> <span>Starter tokens land in your account. Artists hold the majority, so artists steer the gallery.</span></div></div>
+        <div class="point"><div class="ic">3</div><div><b>You set the fee.</b> <span>The cut — and where it goes — is voted on by the artists together, not set by a company.</span></div></div>
+      </div>
+    </div>
+    <div class="panel" id="signupPanel">
+      <div id="signupForm">
+        <h3 class="serif">Create your artist account</h3>
+        <div class="sub">Demo — nothing is sent anywhere. Submitting mints a mock on-chain identity.</div>
+        <label>Artist / studio name</label><input id="inName" placeholder="Your studio name" value="Alex Rivera" />
+        <label>Email</label><input id="inEmail" type="email" value="artist@example.com" />
+        <label>Password</label><input id="inPass" type="password" value="demo1234" />
+        <button class="btn btn-ink full" id="doSignup">Create account &amp; mint identity →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEDGER (artist-only) -->
+<section class="view" id="view-ledger">
+  <div class="lhead">
+    <div class="for-artists">Artist view · private to account holders</div>
+    <h1 class="serif">The on-chain ledger</h1>
+    <p>Every artist who joins and every sale is written to Usernode as a permanent, tamper-proof record — who, what, how much, and the fee split. The money moves in fiat; the chain keeps the truth. Buyers never see this — it's the artists' shared book.</p>
+  </div>
+  <div class="ledger" id="ledger"></div>
+</section>
+
+<!-- STUDIO DASHBOARD (artist-only) -->
+<section class="view" id="view-dashboard"></section>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="proto-badge">◴ Local prototype · mock data · no backend</div>
+<footer>The Artists' Collective — prototype for the Usernode Dapp Hackathon · artworks are public-domain placeholders, prices illustrative</footer>
+
+<script>
+/* ---------- artists ---------- */
+const ARTISTS = {
+  "Sofia Romano":{loc:"Rome \u00b7 Belgrade", bio:"Works between landscape and abstraction, chasing the quiet moment before a scene resolves.", portrait:"gen/portrait_young/artist_0.jpg"},
+  "Marko \u0110uri\u0107":{loc:"Belgrade", bio:"Geometric abstraction \u2014 colour treated as structure, not decoration.", portrait:"gen/portrait_young/artist_1.jpg"},
+  "Lena Haas":{loc:"Vienna", bio:"Abstraction built from layered fields and slow, deliberate mark-making.", portrait:"gen/portrait_young/artist_2.jpg"},
+  "Tomas Berg":{loc:"Oslo", bio:"Landscapes and still forms pared back to weight, light and edge.", portrait:"gen/portrait_young/artist_3.jpg"},
+  "Ana Vidal":{loc:"Lisbon", bio:"Sculptor and painter; the human gesture carried into material.", portrait:"gen/portrait_young/artist_4.jpg"},
+  "Karl Mensch":{loc:"Berlin", bio:"Monochrome and minimal \u2014 what's left when colour is taken away.", portrait:"gen/portrait_young/artist_5.jpg"},
+  "Mira Solano":{loc:"Barcelona", bio:"Light on water and stone; plein-air studies and cast forms.", portrait:"gen/portrait_young/artist_6.jpg"},
+};
+/* ---------- catalog (AI-generated, local files) ---------- */
+const desc=(w)=>{const d={Abstract:`builds its image from layered colour and gesture rather than line — worked slowly until the balance held.`,Monochrome:`reduces the painting to black, white and the raw ground — every mark deliberate, nothing spare.`,Landscape:`catches a landscape at the edge of abstraction, with light and distance doing most of the work.`,Minimal:`holds a single quiet idea: a few forms, a held silence, room to breathe.`,Sculpture:`is a cast form worked in the round; the surface keeps the trace of the hand.`};return `<em>${w.title}</em> ${d[w.cat]||''}`;};
+const works = [{"id": 0, "img": "gen/color/color_0.jpg", "cat": "Abstract", "title": "Untitled 0", "artist": "Sofia Romano", "size": "40 × 50 cm", "medium": "Oil on canvas", "price": 2200}, {"id": 1, "img": "gen/landscape/landscape_3.jpg", "cat": "Landscape", "title": "Drift", "artist": "Marko Đurić", "size": "60 × 80 cm", "medium": "Oil on linen", "price": 2450}, {"id": 2, "img": "gen/bw/bw_5.jpg", "cat": "Monochrome", "title": "Threshold", "artist": "Lena Haas", "size": "50 × 70 cm", "medium": "Acrylic on canvas", "price": 1900}, {"id": 3, "img": "gen/minimal/minimal_5.jpg", "cat": "Minimal", "title": "Nocturne", "artist": "Tomas Berg", "size": "100 × 120 cm", "medium": "Oil on board", "price": 1750}, {"id": 4, "img": "gen/sculpture/sculpture_7.jpg", "cat": "Sculpture", "title": "Field No. 4", "artist": "Ana Vidal", "size": "h 72 cm", "medium": "Wood & wax", "price": 5400}, {"id": 5, "img": "gen/color/color_1.jpg", "cat": "Abstract", "title": "Verge", "artist": "Karl Mensch", "size": "70 × 90 cm", "medium": "Oil on canvas", "price": 2450}, {"id": 6, "img": "gen/landscape/landscape_0.jpg", "cat": "Landscape", "title": "Quiet Ground", "artist": "Mira Solano", "size": "80 × 100 cm", "medium": "Oil on linen", "price": 2700}, {"id": 7, "img": "gen/bw/bw_0.jpg", "cat": "Monochrome", "title": "Tide", "artist": "Sofia Romano", "size": "30 × 40 cm", "medium": "Acrylic on canvas", "price": 2150}, {"id": 8, "img": "gen/minimal/minimal_0.jpg", "cat": "Minimal", "title": "Ash & Gold", "artist": "Marko Đurić", "size": "40 × 50 cm", "medium": "Oil on board", "price": 2000}, {"id": 9, "img": "gen/sculpture/sculpture_6.jpg", "cat": "Sculpture", "title": "Margin", "artist": "Lena Haas", "size": "h 72 cm", "medium": "Wood & wax", "price": 5700}, {"id": 10, "img": "gen/color/color_2.jpg", "cat": "Abstract", "title": "Ember", "artist": "Tomas Berg", "size": "50 × 70 cm", "medium": "Oil on canvas", "price": 2750}, {"id": 11, "img": "gen/landscape/landscape_6.jpg", "cat": "Landscape", "title": "Signal", "artist": "Ana Vidal", "size": "100 × 120 cm", "medium": "Oil on linen", "price": 3000}, {"id": 12, "img": "gen/bw/bw_3.jpg", "cat": "Monochrome", "title": "Fold", "artist": "Karl Mensch", "size": "50 × 50 cm", "medium": "Acrylic on canvas", "price": 2450}, {"id": 13, "img": "gen/minimal/minimal_4.jpg", "cat": "Minimal", "title": "Salt", "artist": "Mira Solano", "size": "70 × 90 cm", "medium": "Oil on board", "price": 2300}, {"id": 14, "img": "gen/sculpture/sculpture_0.jpg", "cat": "Sculpture", "title": "Pale Morning", "artist": "Sofia Romano", "size": "h 72 cm", "medium": "Wood & wax", "price": 5950}, {"id": 15, "img": "gen/color/color_6.jpg", "cat": "Abstract", "title": "Interval", "artist": "Marko Đurić", "size": "30 × 40 cm", "medium": "Oil on canvas", "price": 3000}, {"id": 16, "img": "gen/landscape/landscape_4.jpg", "cat": "Landscape", "title": "Low Sun", "artist": "Lena Haas", "size": "40 × 50 cm", "medium": "Oil on linen", "price": 3250}, {"id": 17, "img": "gen/bw/bw_6.jpg", "cat": "Monochrome", "title": "Reach", "artist": "Tomas Berg", "size": "60 × 80 cm", "medium": "Acrylic on canvas", "price": 2700}, {"id": 18, "img": "gen/minimal/minimal_1.jpg", "cat": "Minimal", "title": "Stilllife", "artist": "Ana Vidal", "size": "50 × 70 cm", "medium": "Oil on board", "price": 2550}, {"id": 19, "img": "gen/sculpture/sculpture_1.jpg", "cat": "Sculpture", "title": "Cadence", "artist": "Karl Mensch", "size": "h 72 cm", "medium": "Wood & wax", "price": 6200}, {"id": 20, "img": "gen/color/color_8.jpg", "cat": "Abstract", "title": "Hollow", "artist": "Mira Solano", "size": "50 × 50 cm", "medium": "Oil on canvas", "price": 3250}, {"id": 21, "img": "gen/landscape/landscape_7.jpg", "cat": "Landscape", "title": "Spar", "artist": "Sofia Romano", "size": "70 × 90 cm", "medium": "Oil on linen", "price": 3500}, {"id": 22, "img": "gen/bw/bw_7.jpg", "cat": "Monochrome", "title": "Ridge", "artist": "Marko Đurić", "size": "80 × 100 cm", "medium": "Acrylic on canvas", "price": 2950}, {"id": 23, "img": "gen/minimal/minimal_2.jpg", "cat": "Minimal", "title": "Bloom", "artist": "Lena Haas", "size": "30 × 40 cm", "medium": "Oil on board", "price": 2800}, {"id": 24, "img": "gen/sculpture/sculpture_2.jpg", "cat": "Sculpture", "title": "Current", "artist": "Tomas Berg", "size": "h 72 cm", "medium": "Wood & wax", "price": 6450}, {"id": 25, "img": "gen/color/color_9.jpg", "cat": "Abstract", "title": "Vael", "artist": "Ana Vidal", "size": "60 × 80 cm", "medium": "Oil on canvas", "price": 3500}, {"id": 26, "img": "gen/landscape/landscape_1.jpg", "cat": "Landscape", "title": "Onyx", "artist": "Karl Mensch", "size": "50 × 70 cm", "medium": "Oil on linen", "price": 3800}, {"id": 27, "img": "gen/bw/bw_1.jpg", "cat": "Monochrome", "title": "Litho", "artist": "Mira Solano", "size": "100 × 120 cm", "medium": "Acrylic on canvas", "price": 3250}, {"id": 28, "img": "gen/minimal/minimal_3.jpg", "cat": "Minimal", "title": "Sediment", "artist": "Sofia Romano", "size": "50 × 50 cm", "medium": "Oil on board", "price": 3100}, {"id": 29, "img": "gen/sculpture/sculpture_3.jpg", "cat": "Sculpture", "title": "Crest", "artist": "Marko Đurić", "size": "h 72 cm", "medium": "Wood & wax", "price": 6750}, {"id": 30, "img": "gen/color/color_3.jpg", "cat": "Abstract", "title": "Halo", "artist": "Lena Haas", "size": "80 × 100 cm", "medium": "Oil on canvas", "price": 3800}, {"id": 31, "img": "gen/landscape/landscape_5.jpg", "cat": "Landscape", "title": "Vesper", "artist": "Tomas Berg", "size": "30 × 40 cm", "medium": "Oil on linen", "price": 4050}, {"id": 32, "img": "gen/bw/bw_2.jpg", "cat": "Monochrome", "title": "Plinth", "artist": "Ana Vidal", "size": "40 × 50 cm", "medium": "Acrylic on canvas", "price": 3500}, {"id": 33, "img": "gen/sculpture/sculpture_4.jpg", "cat": "Sculpture", "title": "Torque", "artist": "Karl Mensch", "size": "h 40 cm", "medium": "Steel", "price": 6950}, {"id": 34, "img": "gen/color/color_10.jpg", "cat": "Abstract", "title": "Knot", "artist": "Mira Solano", "size": "50 × 70 cm", "medium": "Mixed media on canvas", "price": 4000}, {"id": 35, "img": "gen/landscape/landscape_2.jpg", "cat": "Landscape", "title": "Husk", "artist": "Sofia Romano", "size": "100 × 120 cm", "medium": "Oil on canvas", "price": 4250}, {"id": 36, "img": "gen/bw/bw_4.jpg", "cat": "Monochrome", "title": "Strata", "artist": "Marko Đurić", "size": "50 × 50 cm", "medium": "Oil on linen", "price": 3700}, {"id": 37, "img": "gen/sculpture/sculpture_5.jpg", "cat": "Sculpture", "title": "Meridian", "artist": "Lena Haas", "size": "h 64 cm", "medium": "Patinated bronze", "price": 7150}, {"id": 38, "img": "gen/color/color_4.jpg", "cat": "Abstract", "title": "Cusp", "artist": "Tomas Berg", "size": "80 × 100 cm", "medium": "Oil on board", "price": 4200}, {"id": 39, "img": "gen/color/color_5.jpg", "cat": "Abstract", "title": "Relic", "artist": "Ana Vidal", "size": "30 × 40 cm", "medium": "Mixed media on canvas", "price": 4250}, {"id": 40, "img": "gen/color/color_7.jpg", "cat": "Abstract", "title": "Lumen", "artist": "Karl Mensch", "size": "40 × 50 cm", "medium": "Oil on canvas", "price": 4300}, {"id": 41, "img": "gen/color/color_11.jpg", "cat": "Abstract", "title": "Coda", "artist": "Mira Solano", "size": "60 × 80 cm", "medium": "Oil on linen", "price": 4350}];
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const hex=n=>Array.from({length:n},()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
+const txHash=()=>'0x'+hex(40), addr=()=>'usn1q'+hex(38);
+const usd=n=>'$'+n.toLocaleString('en-US');
+const nodes=()=>97+Math.floor(Math.random()*40);
+const initials=n=>n.split(' ').map(p=>p[0]).join('').slice(0,2);
+
+/* ---------- theme ---------- */
+const root=document.documentElement;
+function applyTheme(t){root.dataset.theme=t;$('#themeTog').textContent=t==='dark'?'☀':'☾';try{localStorage.setItem('acg-theme',t)}catch(e){}}
+$('#themeTog').onclick=()=>applyTheme(root.dataset.theme==='dark'?'light':'dark');
+try{const s=localStorage.getItem('acg-theme');if(s)applyTheme(s);}catch(e){}
+
+/* ---------- ledger (artist-only) ---------- */
+const ledger=[
+  {type:'join', who:'Sofia Romano', hash:txHash(), n:nodes(), t:'2 days ago'},
+  {type:'sale', title:'Auvers, Panorama', amt:6800, who:'Mira Solano', hash:txHash(), n:nodes(), t:'1 day ago'},
+  {type:'join', who:'Tomas Berg', hash:txHash(), n:nodes(), t:'1 day ago'},
+  {type:'sale', title:'Apples', amt:2400, who:'Tomas Berg', hash:txHash(), n:nodes(), t:'6 hours ago'},
+];
+function renderLedger(){
+  const el=$('#ledger'); el.innerHTML='';
+  ledger.forEach(e=>{
+    const d=document.createElement('div'); d.className='lrow';
+    if(e.type==='join'){
+      d.innerHTML=`<span class="tag join">Artist joined</span><div class="detail"><b>${e.who}</b> opened an account — founding stake minted</div><div class="hash">${e.hash.slice(0,22)}…<span class="nodes">✓ validated · ${e.n} nodes · ${e.t}</span></div>`;
+    } else {
+      const fee=Math.round(e.amt*0.2), artist=e.amt-fee;
+      d.innerHTML=`<span class="tag sale">Sale</span><div class="detail"><b>${e.title}</b> · ${usd(e.amt)} · artist ${usd(artist)} · fee ${usd(fee)} → treasury</div><div class="hash">${e.hash.slice(0,22)}…<span class="nodes">✓ validated · ${e.n} nodes · ${e.t}</span></div>`;
+    }
+    el.appendChild(d);
+  });
+}
+
+/* ---------- studio dashboard (artist-only) ---------- */
+let me=null;
+const gov={title:'Proposal · Fee Split Adjustment', body:'Reduce the platform fee from 20% to 18% Community Fund + 2% Artist Dividend. Voting ends in 2 days.', yes:128, no:34, voted:null};
+function vote(v){ if(gov.voted) return; gov.voted=v; gov[v]+=1; renderDashboard(); }
+function renderDashboard(){
+  const sales=ledger.filter(e=>e.type==='sale');
+  const total=sales.reduce((s,e)=>s+e.amt,0);
+  const yes=Math.round(gov.yes/(gov.yes+gov.no)*100);
+  const alloc=[['Marketing & reach',45],['Infrastructure',20],['Artist dividends',15],['Reserve',20]];
+  const own=[['Artists (collective)',62],['Founding pool',18],['Treasury',12],['Open investors',8]];
+  $('#view-dashboard').innerHTML=`
+    <div class="dash-head"><div class="for-artists">Artist view · ${me||'your studio'}</div><h1 class="serif">Studio dashboard</h1>
+    <p class="dash-sub">Your ownership, the gallery's governance, the treasury, and your verified on-chain sales — in one place.</p></div>
+    <div class="dash-grid">
+      <div class="statcard"><div class="l">Your tokens</div><div class="v acc">1,500 TACT</div></div>
+      <div class="statcard"><div class="l">Your stake</div><div class="v">0.8%</div></div>
+      <div class="statcard"><div class="l">Your sales</div><div class="v">${sales.length}</div></div>
+      <div class="statcard"><div class="l">Sales value</div><div class="v">${usd(total)}</div></div>
+    </div>
+    <div class="dash-cols">
+      <div>
+        <div class="dpanel"><h2 class="serif">Governance</h2><div class="hint">One artist, one vote. The fee — and where it goes — is decided here, not by a company.</div>
+          <div class="proposal"><div class="ttl">${gov.title}</div><div class="body">${gov.body}</div>
+            <div class="votebar"><span class="y" style="width:${yes}%"></span><span class="n" style="width:${100-yes}%"></span></div>
+            <div class="votenum"><span>For ${gov.yes}</span><span>Against ${gov.no}</span></div>
+            ${gov.voted?`<div class="voted">✓ You voted ${gov.voted==='yes'?'FOR':'AGAINST'}</div>`:`<div class="voterow"><button class="yes" onclick="vote('yes')">Vote for</button><button class="no" onclick="vote('no')">Vote against</button></div>`}
+          </div>
+        </div>
+        <div class="dpanel"><h2 class="serif">Your sales · verified on-chain</h2><div class="hint">Each sale settles in fiat through Stripe; the receipt is notarised on Usernode.</div>
+          ${sales.length?sales.map(e=>`<div class="srow"><div><b class="serif" style="font-style:italic">${e.title}</b><div class="rcpt">Stripe #${1000+Math.floor(e.amt%9000)} · ${usd(e.amt)} · fee ${usd(Math.round(e.amt*0.2))}</div></div><span class="vbadge">✓ on-chain · ${e.n} nodes</span></div>`).join(''):'<div class="hint">No sales yet — when a collector buys your work it lands here.</div>'}
+        </div>
+      </div>
+      <div>
+        <div class="dpanel"><h2 class="serif">Treasury</h2><div class="hint">Platform fees, pooled by the collective.</div>
+          <div class="treas">$48,250</div>
+          <div class="alloc">${alloc.map(a=>`<div class="arow"><div class="row"><span>${a[0]}</span><span>${a[1]}%</span></div><div class="bar"><i style="width:${a[1]}%"></i></div></div>`).join('')}</div>
+        </div>
+        <div class="dpanel"><h2 class="serif">Ownership</h2><div class="hint">Artists hold the majority — by design.</div>
+          <div class="alloc">${own.map(a=>`<div class="arow"><div class="row"><span>${a[0]}</span><span>${a[1]}%</span></div><div class="bar"><i style="width:${a[1]}%"></i></div></div>`).join('')}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ---------- cards ---------- */
+function cardHTML(w){
+  return `<div class="card" onclick="openProduct(${w.id})">
+    <div class="frame"><img loading="lazy" src="${w.img}" alt="${w.title}"></div>
+    <div class="meta"><div class="t">${w.title}</div><div class="a">${w.artist} · ${w.cat}</div>
+    <div class="row"><span class="size">${w.size}</span><span class="price">${usd(w.price)}</span></div></div></div>`;
+}
+function renderGrid(filter='all'){
+  const grid=$('#grid');
+  const list=works.filter(w=>filter==='all'||w.cat===filter);
+  grid.innerHTML=list.map((w,i)=>cardHTML(w)).join('');
+  Array.from(grid.children).forEach((c,i)=>c.style.animationDelay=(i*0.03)+'s');
+  $('#count').textContent=list.length+' works';
+}
+function renderFeatured(){ $('#featRow').innerHTML=[4,8,16,1].map(i=>cardHTML(works[i])).join(''); }
+
+/* ---------- artists directory ---------- */
+const DYNAMIC = new Set();   // handles of real (dApp-enrolled) artists from D1
+function renderDirectory(){
+  const names = Object.keys(ARTISTS);
+  names.sort((a,b)=>(DYNAMIC.has(b)?1:0)-(DYNAMIC.has(a)?1:0));
+  const card=(name)=>{
+    const a=ARTISTS[name]||{}; const n=works.filter(w=>w.artist===name).length;
+    const member=DYNAMIC.has(name);
+    const av=a.portrait?`<img src="${a.portrait}" alt="${name}">`:(name[0]||'?').toUpperCase();
+    const safe=name.replace(/'/g,"\\'");
+    return `<div class="acard" onclick="openStudio('${safe}')">
+      <div class="aav">${av}</div>
+      <div><div class="an">${name}${member?'<span class="amember">● member</span>':''}</div>
+      <div class="al">${a.loc||''}</div><div class="aw">${n} work${n===1?'':'s'}</div></div></div>`;
+  };
+  $('#view-directory').innerHTML=`
+    <div class="dirhead"><h1 class="serif">Artists</h1>
+      <p>Everyone who's opened an account on the collective. Find your studio here, or browse the others.</p></div>
+    <div class="agrid">${names.map(card).join('')}</div>`;
+}
+
+/* ---------- product page ---------- */
+function openProduct(id){
+  const w=works[id]; const fee=Math.round(w.price*0.2), artist=w.price-fee;
+  const more=works.filter(x=>x.artist===w.artist&&x.id!==w.id).slice(0,4);
+  $('#view-product').innerHTML=`
+    <a class="back" onclick="setView('gallery')">← Back to the gallery</a>
+    <div class="product">
+      <div class="p-stage">
+        <div class="p-main"><img id="pMain" src="${w.img}" alt="${w.title}"></div>
+        <div class="p-thumbs">
+          <button class="sel" onclick="pView(this,'full')"><img src="${w.img}"></button>
+          <button onclick="pView(this,'d1')"><img src="${w.img}" style="object-position:top"></button>
+          <button onclick="pView(this,'d2')"><img src="${w.img}" style="object-position:bottom"></button>
+        </div>
+      </div>
+      <div class="p-info">
+        <h1 class="serif">${w.title}</h1>
+        <div class="p-artist">by <a onclick="openStudio('${w.artist}')">${w.artist}</a> · ${w.cat}</div>
+        <div class="p-price">${usd(w.price)}</div>
+        <div class="p-specs">
+          <div><span class="k">Medium</span><span>${w.medium}</span></div>
+          <div><span class="k">Dimensions</span><span>${w.size}</span></div>
+          <div><span class="k">Provenance</span><span>Recorded on Usernode</span></div>
+        </div>
+        <div class="p-desc">${desc(w)}</div>
+        <button class="btn btn-ink p-buy" onclick="openBuy(${w.id})">Buy with card · ${usd(w.price)}</button>
+        <div class="p-trust">🔒 Secure card payment · no account, no crypto needed</div>
+      </div>
+    </div>
+    ${more.length?`<div class="more"><h2 class="serif">More from ${w.artist}</h2><div class="more-row">${more.map(cardHTML).join('')}</div></div>`:''}`;
+  showView('product'); pushHist({t:'product',id});
+}
+function pView(btn,mode){
+  document.querySelectorAll('.p-thumbs button').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel');
+  const m=$('#pMain'); m.className = mode==='full'?'':'detail';
+  m.style.objectPosition = mode==='d1'?'top':mode==='d2'?'bottom':'center';
+}
+
+/* ---------- studio (artist page) ---------- */
+function openStudio(name){
+  const a=ARTISTS[name]||{loc:'',bio:''};
+  const mine=works.filter(w=>w.artist===name);
+  $('#view-studio').innerHTML=`
+    <a class="back" onclick="setView('gallery')">← Back to the gallery</a>
+    <div class="studio-head">
+      <div class="avatar" style="padding:0;overflow:hidden">${a.portrait?`<img src="${a.portrait}" alt="${name}" style="width:100%;height:100%;object-fit:cover">`:initials(name)}</div>
+      <div>
+        <h1 class="serif">${name}</h1>
+        <div class="loc">${a.loc}</div>
+        <div class="bio">${a.bio}</div>
+        <span class="chip">⬡ Verified artist · on-chain since 2026</span>
+      </div>
+    </div>
+    <div class="grid" style="padding-top:40px">${mine.map(cardHTML).join('')}</div>`;
+  showView('studio'); pushHist({t:'studio',name});
+}
+
+/* ---------- views ---------- */
+function showView(v){
+  document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
+  $('#view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-links button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  if(v==='ledger') renderLedger();
+  if(v==='dashboard') renderDashboard();
+  if(v==='directory') renderDirectory();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+let _restoring=false;
+function pushHist(st){ if(!_restoring){ try{history.pushState(st,'')}catch(e){} } }
+function setView(v){ showView(v); pushHist({t:'view',v}); }
+window.addEventListener('popstate',e=>{
+  const st=e.state||{t:'view',v:'home'}; _restoring=true;
+  if(st.t==='product') openProduct(st.id);
+  else if(st.t==='studio') openStudio(st.name);
+  else showView(st.v||'home');
+  _restoring=false;
+});
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+$('#filters').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('#filters').querySelector('.active').classList.remove('active');b.classList.add('active');renderGrid(b.dataset.f);});
+
+/* ---------- signup ---------- */
+$('#doSignup').onclick=()=>{
+  const name=$('#inName').value||'New Artist';
+  const a=addr(), h=txHash(), n=nodes();
+  $('#signupPanel').innerHTML=`<div class="success">
+    <div class="seal">✓</div><h3 class="serif">Welcome, ${name}.</h3>
+    <div class="sub">Your account is live on Usernode — validated by ${n} nodes.</div>
+    <div class="kv"><div><span class="k">Ledger address</span><span class="v acc">${a.slice(0,30)}…</span></div>
+      <div><span class="k">Founding stake</span><span class="v">1,500 TACT</span></div>
+      <div><span class="k">Transaction</span><span class="v">${h.slice(0,30)}…</span></div></div>
+    <div class="onchain-note"><span class="pulse"></span> Recorded on-chain · ownership through participation</div>
+    <button class="btn btn-ghost full" onclick="setView('ledger')">See it in the ledger →</button></div>`;
+  ledger.unshift({type:'join',who:name,hash:h,n:n,t:'just now'});
+  $('#walletPill').style.display='flex'; $('#walletAddr').textContent=a.slice(0,9)+'…';
+  $('#signinBtn').style.display='none'; $('#navLedger').classList.remove('locked'); $('#navDash').classList.remove('locked'); me=name;
+};
+
+/* ---------- buy ---------- */
+let current=null;
+function openBuy(id){
+  current=works[id];
+  $('#modal').innerHTML=`
+    <div class="modal-art"><img src="${current.img}" alt=""><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <h3 class="serif"><em>${current.title}</em></h3><div class="who">${current.artist} · ${current.size}</div>
+      <div class="pay-line"><span>Total</span><span class="amt">${usd(current.price)}</span></div>
+      <button class="btn btn-ink" style="width:100%;justify-content:center;display:flex;padding:14px;margin-top:6px" onclick="payNow()">Pay ${usd(current.price)} by card</button>
+      <div class="securenote">🔒 Secure card payment · no account, no crypto needed</div>
+    </div>`;
+  $('#overlay').classList.add('show');
+}
+function closeModal(){$('#overlay').classList.remove('show');}
+$('#overlay').onclick=e=>{if(e.target===$('#overlay'))closeModal();};
+function payNow(){
+  $('#modal').innerHTML=`<div class="modal-body"><div class="processing"><div class="spinner"></div></div></div>`;
+  const h=txHash(), n=nodes();
+  ledger.unshift({type:'sale',title:current.title,amt:current.price,who:current.artist,hash:h,n:n,t:'just now'});
+  setTimeout(()=>{
+    $('#modal').innerHTML=`<div class="modal-body"><div class="success">
+      <div class="seal">✓</div><h3 class="serif">Sale complete.</h3>
+      <p style="color:var(--ink-soft);font-size:14.5px;margin-top:10px">The sale is now permanently recorded on Usernode.</p>
+      <button class="btn btn-ink" style="width:100%;justify-content:center;display:flex;padding:13px;margin-top:22px" onclick="closeModal()">Done</button>
+    </div></div>`;
+  },1300);
+}
+
+/* ---------- init ---------- */
+renderFeatured(); renderGrid();
+
+/* ---------- merge dynamically-created (on-chain enrolled) artists ---------- */
+fetch('/api/artists').then(r=>r.json()).then(d=>{
+  if(!d||!d.artists||!d.artists.length) return;
+  const h={};
+  d.artists.forEach(a=>{ h[a.address]=a.handle; DYNAMIC.add(a.handle); if(!ARTISTS[a.handle]) ARTISTS[a.handle]={loc:a.loc,bio:a.bio,portrait:a.portrait}; });
+  (d.works||[]).forEach(w=>{ works.push({id:works.length,img:w.img,cat:w.cat,title:w.title,artist:h[w.artist_address]||w.artist_address,size:w.size,medium:w.medium,price:w.price}); });
+  renderGrid(); renderDirectory();
+}).catch(()=>{});
+
+try{history.replaceState({t:'view',v:'home'},'')}catch(e){}
+/* deep-link: open a view straight from the URL hash, e.g. #directory, #gallery */
+function _deeplink(){ const h=(location.hash||'').replace(/^#(view-)?/,''); if(h && document.getElementById('view-'+h)) showView(h); }
+window.addEventListener('hashchange', _deeplink);
+setTimeout(_deeplink, 60);
+</script>
+</body>
+</html>

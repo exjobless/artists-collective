@@ -1,0 +1,19 @@
+# The Artists' Collective — simulated-sales BOT.
+# A standalone Cloudflare Worker (separate from the Pages site), cron-triggered.
+# Every tick it inserts ONE simulated sale into the D1 `sales` table so the
+# website gallery + /join profiles feel alive. DB-only for now (tx_id=null);
+# on-chain receipts arrive Monday via mintReceipt() — see src/index.js.
+name = "artists-collective-sales-bot"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+# Fire every 5 minutes. Tunable — handoff suggested */4; */5 keeps the DB from
+# filling too fast while still feeling live.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Same D1 database the website backend uses. Exposes env.DB.
+[[d1_databases]]
+binding = "DB"
+database_name = "artists-collective-db"
+database_id = "b9708c23-3b94-4367-ab78-4b3488e8f42e"

@@ -1,0 +1,18 @@
+# Cloudflare Pages config for The Artists' Collective.
+# Static assets come from dist/; dynamic routes from functions/ (/join, /api/*).
+name = "artists-collective"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-06-01"
+
+# D1 binding — exposes env.DB inside the Functions.
+# database_id is filled after `wrangler d1 create artists-collective-db`.
+[[d1_databases]]
+binding = "DB"
+database_name = "artists-collective-db"
+database_id = "b9708c23-3b94-4367-ab78-4b3488e8f42e"
+
+# R2 binding — artist-uploaded artwork + profile pictures. env.UPLOADS in Functions.
+# Objects served back via the /u/* route (functions/u/[[key]].js).
+[[r2_buckets]]
+binding = "UPLOADS"
+bucket_name = "artists-collective-uploads"

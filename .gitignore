@@ -1,0 +1,45 @@
+# secrets (keys live in 01Projects/_meta/env, never here — belt & braces)
+*.env
+.env
+
+# build artifacts / deploy output / scratch
+prototype/dist/
+prototype/pool/
+prototype/gen-test/
+prototype/img/
+prototype/gen/portrait/
+prototype/__pycache__/
+**/__pycache__/
+prototype/_data_artists.js
+prototype/_data_works.js
+prototype/_check.js
+.wrangler/
+node_modules/
+
+# reference clone of Usernode's dapp-starter (has its own .git; study only)
+dapp-starter/
+
+# os / sync
+Thumbs.db
+.DS_Store
+**/.stfolder
+**/.stignore
+
+# the dApp is its own repo (artists-collective-dapp), deployed to Usernode
+dapp/
+
+# backend secrets
+backend/.env
+
+# local one-off web-access codes (never commit)
+*.local.txt
+
+# ── internal — NOT part of the public website ──
+# strategy/pitch docs, meta notes, and video production stay LOCAL only.
+# The public repo tracks the website (prototype/) + its backend (backend/) only.
+_meta/
+dapp-pitch/
+explainer-video/
+files/
+/Brainstorm Flash Challenge rules.txt
+/Brainstorm Flash Challenge video transcript..txt

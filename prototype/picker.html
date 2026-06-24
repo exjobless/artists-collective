@@ -1,0 +1,77 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pick the artworks — The Artists' Collective</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--paper:#fff;--mat:#ece6d9;--ink:#1d1b16;--soft:#615c51;--line:#e4ded2;--accent:#8a3b2e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Hanken Grotesk',system-ui,sans-serif;padding:0 0 130px}
+.serif{font-family:'Cormorant Garamond',serif}
+header{padding:42px 34px 18px;max-width:1300px;margin:0 auto}
+h1{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:40px}
+p.lead{color:var(--soft);margin-top:10px;max-width:70ch;font-size:15px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:22px 34px 0;max-width:1300px;margin:0 auto}
+.filters button{font-size:13px;padding:8px 16px;border:1px solid var(--line);border-radius:100px;color:var(--soft);background:none;cursor:pointer}
+.filters button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:20px;padding:26px 34px;max-width:1300px;margin:0 auto}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:800px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.grid{grid-template-columns:repeat(2,1fr)}}
+.card{cursor:pointer;border:2px solid transparent;border-radius:5px;padding:7px;transition:.15s;position:relative}
+.card:hover{background:#faf7f0}
+.card.sel{border-color:var(--accent);background:#faf3ee}
+.thumb{aspect-ratio:1/1;background:var(--mat);border:1px solid var(--line);display:grid;place-items:center;padding:9%;overflow:hidden}
+.thumb img{max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 5px 16px rgba(0,0,0,.18)}
+.num{position:absolute;top:12px;left:12px;background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:3px 8px;border-radius:100px;z-index:2}
+.card.sel .num{background:var(--accent)}
+.check{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:none;place-items:center;font-size:14px;z-index:2}
+.card.sel .check{display:grid}
+.t{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;margin-top:9px;line-height:1.15}
+.a{font-size:12px;color:var(--soft);margin-top:2px}
+.tray{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:16px 34px;display:flex;align-items:center;gap:18px}
+.tray .n{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.tray .list{flex:1;font-size:13px;color:var(--soft);font-family:ui-monospace,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tray button{background:var(--ink);color:#fff;border:none;padding:11px 20px;border-radius:4px;font-family:inherit;font-weight:600;cursor:pointer}
+.tray button.clear{background:none;color:var(--soft);border:1px solid var(--line)}
+</style></head><body>
+<header>
+  <h1 class="serif">Pick the artworks</h1>
+  <p class="lead">These are public-domain works from the Art Institute of Chicago's open collection — the source I pull from. Click any piece to select it. When you're happy, hit <b>Copy selection</b> and paste the numbers back to me, and I'll build the gallery from exactly those. Filter by type below.</p>
+</header>
+<div class="filters" id="filters"></div>
+<div class="grid" id="grid"></div>
+<div class="tray">
+  <span class="n" id="cnt">0</span>
+  <span class="list" id="list">nothing selected yet</span>
+  <button class="clear" onclick="clearSel()">Clear</button>
+  <button onclick="copySel()">Copy selection</button>
+</div>
+<script>
+const POOL=[{"n": 0, "iid": "9694ca0c-c4c4-e48d-566f-4d248990cff4", "title": "Landscape with Two Poplars", "artist": "Vasily Kandinsky", "cat": "Abstract"}, {"n": 1, "iid": "c68f33ec-feb1-5277-334b-b71ac15ae394", "title": "Painting with Green Center", "artist": "Vasily Kandinsky", "cat": "Abstract"}, {"n": 2, "iid": "3f732b69-0ae7-7d1e-ad53-e20b0cc2de72", "title": "Houses at Murnau", "artist": "Vasily Kandinsky", "cat": "Abstract"}, {"n": 3, "iid": "7b7a6f39-1cd8-ea2f-9811-18b0e23edac0", "title": "Self-Portrait", "artist": "Walter Shirlaw", "cat": "Abstract"}, {"n": 4, "iid": "b55d836c-ee20-59f8-1f0c-a95e09905361", "title": "Interior of St. Mark's, Venice", "artist": "David Dalhoff Neal", "cat": "Abstract"}, {"n": 5, "iid": "90bc0cec-0d4e-9af5-3912-52a082a428e5", "title": "Auvers, Panoramic View", "artist": "Paul Cezanne", "cat": "Abstract"}, {"n": 6, "iid": "ae6ac285-6887-dd76-4570-d379c786dfae", "title": "Arlésiennes (Mistral)", "artist": "Paul Gauguin", "cat": "Abstract"}, {"n": 7, "iid": "2adb35ce-8e94-cda5-210e-b04d488bbdc8", "title": "No te aha oe riri (Why Are You Angry?)", "artist": "Paul Gauguin", "cat": "Abstract"}, {"n": 8, "iid": "73a61bab-fcf6-7145-3e29-8edd95212db1", "title": "Landscape No. 3, Cash Entry Mines, New Mexico", "artist": "Marsden Hartley", "cat": "Abstract"}, {"n": 9, "iid": "97314d3d-dc9b-fd8e-644e-eb5150f16721", "title": "The Dark Mountain", "artist": "Marsden Hartley", "cat": "Abstract"}, {"n": 10, "iid": "3dbc5164-36fe-36b0-0213-2198ee309f82", "title": "Movement No. 10", "artist": "Marsden Hartley", "cat": "Abstract"}, {"n": 11, "iid": "e5ee149b-36ed-49c1-cad0-04ae6535090d", "title": "Still Life No. 3", "artist": "Marsden Hartley", "cat": "Abstract"}, {"n": 12, "iid": "527417cf-28b5-45f0-8afe-20af0dcc1418", "title": "Standing Bather, Seen from the Back", "artist": "Paul Cezanne", "cat": "Landscape"}, {"n": 13, "iid": "0f1cc0e0-e42e-be16-3f71-2022da38cb93", "title": "Arrival of the Normandy Train, Gare Saint-Lazare", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 14, "iid": "b0effb1c-ff23-bbaa-f809-9fd94e31c1a0", "title": "Cliff Walk at Pourville", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 15, "iid": "8534685d-1102-e1e3-e194-94f6e925e8b0", "title": "Water Lily Pond", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 16, "iid": "95be2572-b53d-8e7b-abc9-10eb48d4fa5d", "title": "The Beach at Sainte-Adresse", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 17, "iid": "4d1b3ad0-14db-0d21-ad9f-17abb8bdfbb5", "title": "Bordighera", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 18, "iid": "838d8c33-a3b4-68ea-587b-87ceec2011af", "title": "Branch of the Seine near Giverny (Mist)", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 19, "iid": "66f95ea3-a11a-1cf4-6599-d0a49bb25744", "title": "On the Bank of the Seine, Bennecourt", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 20, "iid": "c12058f4-188f-c6ed-f0fe-52b32acfb296", "title": "Apples and Grapes", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 21, "iid": "03930df3-1e6c-eeca-8660-c0b22ca477ff", "title": "Houses of Parliament, London", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 22, "iid": "2765aee9-3d78-ec6c-5c66-a1d9dc8173f6", "title": "Rocks at Port-Goulphar, Belle-Île", "artist": "Claude Monet", "cat": "Landscape"}, {"n": 23, "iid": "38f866cb-9000-de5a-e655-d3fb4d8dc056", "title": "Woman in Front of a Still Life by Cezanne", "artist": "Paul Gauguin", "cat": "Landscape"}, {"n": 24, "iid": "7e649536-b186-c3f5-3e6d-0d22d5d798ef", "title": "Jacques and Berthe Lipchitz", "artist": "Amedeo Modigliani", "cat": "Figurative"}, {"n": 25, "iid": "e458fc80-cb2e-f5c0-3c81-8c24b0bdc15b", "title": "Portrait of a Woman", "artist": "Amedeo Modigliani", "cat": "Figurative"}, {"n": 26, "iid": "43249182-2ef0-8d18-3d32-0b9af3606ed3", "title": "Ballet Dancers", "artist": "Henri de Toulouse-Lautrec", "cat": "Figurative"}, {"n": 27, "iid": "c2a4b60c-bf43-6a37-e001-a91cba741168", "title": "Portrait of Jeanne Wenz", "artist": "Henri de Toulouse-Lautrec", "cat": "Figurative"}, {"n": 28, "iid": "6f513908-03cc-b974-633b-adfce56b7936", "title": "The Millinery Shop", "artist": "Hilaire Germain Edgar Degas", "cat": "Figurative"}, {"n": 29, "iid": "ca2932b4-6c0c-5482-2ae5-8b74926d7b73", "title": "Young Spartan Girls Challenging Boys", "artist": "Hilaire Germain Edgar Degas", "cat": "Figurative"}, {"n": 30, "iid": "8fe022ba-e358-5cda-aa70-d96edd0b4f20", "title": "Yellow Dancers (In the Wings)", "artist": "Hilaire Germain Edgar Degas", "cat": "Figurative"}, {"n": 31, "iid": "ba4d7ead-bd10-e02d-6f5f-613050d7062e", "title": "Henri Degas and His Niece Lucie Degas (The Artist's Uncle and Cousin)", "artist": "Hilaire Germain Edgar Degas", "cat": "Figurative"}, {"n": 32, "iid": "ed1b3063-8ce3-d4bc-50cb-b96f13f015e2", "title": "Dorothea and Francesca", "artist": "Cecilia Beaux", "cat": "Figurative"}, {"n": 33, "iid": "a867af78-9a29-c75b-33ab-2f21a2d92b3f", "title": "Café Singer", "artist": "Hilaire Germain Edgar Degas", "cat": "Figurative"}, {"n": 34, "iid": "a56877d3-f08c-e469-2b4c-81823ea30e40", "title": "Portrait after a Costume Ball (Portrait of Madame Dietz-Monnin)", "artist": "Hilaire Germain Edgar Degas", "cat": "Figurative"}, {"n": 35, "iid": "3a608f55-d76e-fa96-d0b1-0789fbc48f1e", "title": "Two Sisters (On the Terrace)", "artist": "Pierre-Auguste Renoir", "cat": "Figurative"}, {"n": 36, "iid": "254c654f-354a-0f4f-28b5-8eb01a02e95c", "title": "Composition (No. 1) Gray-Red", "artist": "Piet Mondrian", "cat": "Minimal"}, {"n": 37, "iid": "3cea045a-92d6-36cf-1508-2c99ea740218", "title": "For Sunday's Dinner", "artist": "William Michael Harnett", "cat": "Minimal"}, {"n": 38, "iid": "6754947f-4ccf-b3ff-41ee-45b738534769", "title": "The Irish Question", "artist": "De Scott Evans", "cat": "Minimal"}, {"n": 39, "iid": "e49ad195-1f62-2fd4-f4df-61f0f0f4951f", "title": "Just Dessert", "artist": "William Michael Harnett", "cat": "Minimal"}, {"n": 40, "iid": "79b94ddd-e208-1993-01ab-98f75174fe88", "title": "Thistles", "artist": "John Singer Sargent", "cat": "Minimal"}, {"n": 41, "iid": "a2f4085a-6715-212a-c5fa-aa88a4692df0", "title": "Wine, Cheese, and Fruit", "artist": "John F. Francis", "cat": "Minimal"}, {"n": 42, "iid": "0729fbba-51e3-a2d7-6d4d-61c2be62af3f", "title": "Magnolias on Light Blue Velvet Cloth", "artist": "Martin Johnson Heade", "cat": "Minimal"}, {"n": 43, "iid": "d0a72b06-f1ee-4464-d58c-5e39bc0534b3", "title": "A Burgher of Calais (Jean d'Aire)", "artist": "Auguste Rodin", "cat": "Sculpture"}, {"n": 44, "iid": "fa74552f-53c3-28bd-dc81-5c2f2b8143a1", "title": "The Serf", "artist": "Henri Matisse", "cat": "Sculpture"}, {"n": 45, "iid": "f9549068-ad7e-c9ce-6fed-5c7a429024fb", "title": "The Lost Pleiade", "artist": "Randolph Rogers", "cat": "Sculpture"}, {"n": 46, "iid": "9e4f8394-4072-5915-2eea-e55132035165", "title": "Relief of a Falling Warrior", "artist": "Ancient Roman", "cat": "Sculpture"}, {"n": 47, "iid": "8ad03fff-be28-ab22-689c-8f022b5e181c", "title": "Life Cast of the Hands and Face of Abraham Lincoln", "artist": "Leonard Wells Volk", "cat": "Sculpture"}, {"n": 48, "iid": "725d19ab-4bd4-e640-86f2-a119e0a154e0", "title": "Bust of a Woman", "artist": "Charles Henri Joseph Cordier", "cat": "Sculpture"}, {"n": 49, "iid": "ae93b54f-91a5-c83a-9561-badbb16695e9", "title": "The Old Dragoons of 1850", "artist": "Frederic Remington", "cat": "Sculpture"}, {"n": 50, "iid": "8ff26954-6229-b1eb-84ca-35ac5e9d3f25", "title": "The Sun Vow", "artist": "Hermon Atkins MacNeil", "cat": "Sculpture"}, {"n": 51, "iid": "34133244-99a5-246f-c72f-76f32e55d253", "title": "Portrait Bust of a Woman", "artist": "Ancient Roman", "cat": "Sculpture"}, {"n": 52, "iid": "fae6d055-fe95-17e2-a00a-c2307ace531c", "title": "Bust of Anne-Marie-Louise Thomas de Domangeville de Sérilly, Comtesse de Pange", "artist": "Jean Antoine Houdon", "cat": "Sculpture"}, {"n": 53, "iid": "95d7115d-3f78-ce6a-d174-d8f3581c9aa4", "title": "Portrait Head of a Woman", "artist": "Ancient Roman", "cat": "Sculpture"}, {"n": 54, "iid": "aee665f2-bb63-2a25-832e-260b73c278a8", "title": "Statue of the Aphrodite of Knidos", "artist": "Ancient Roman", "cat": "Sculpture"}];
+const sel=new Set();
+const cats=['All',...[...new Set(POOL.map(p=>p.cat))]];
+let filter='All';
+const $=s=>document.querySelector(s);
+function renderFilters(){$('#filters').innerHTML=cats.map(c=>`<button class="${c===filter?'active':''}" onclick="setF('${c}')">${c}</button>`).join('')}
+function setF(c){filter=c;renderFilters();renderGrid()}
+function renderGrid(){
+  const list=POOL.filter(p=>filter==='All'||p.cat===filter);
+  $('#grid').innerHTML=list.map(p=>`<div class="card ${sel.has(p.n)?'sel':''}" onclick="tog(${p.n})">
+    <div class="num">#${p.n}</div><div class="check">✓</div>
+    <div class="thumb"><img loading="lazy" src="pool/${p.n}.jpg" alt=""></div>
+    <div class="t">${p.title}</div><div class="a">${p.artist} · ${p.cat}</div></div>`).join('');
+}
+function tog(n){sel.has(n)?sel.delete(n):sel.add(n);renderGrid();updateTray()}
+function clearSel(){sel.clear();renderGrid();updateTray()}
+function updateTray(){
+  const arr=[...sel].sort((a,b)=>a-b);
+  $('#cnt').textContent=arr.length;
+  $('#list').textContent=arr.length?arr.join(', '):'nothing selected yet';
+}
+function copySel(){
+  const arr=[...sel].sort((a,b)=>a-b);
+  const txt=arr.map(n=>{const p=POOL.find(x=>x.n===n);return `#${n} ${p.title} (${p.cat})`}).join('\n');
+  navigator.clipboard.writeText('Selected works:\n'+txt).then(()=>alert('Copied '+arr.length+' works. Paste to Charlie.'));
+}
+renderFilters();renderGrid();updateTray();
+</script></body></html>
